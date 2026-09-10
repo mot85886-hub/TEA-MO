@@ -1,0 +1,323 @@
+{
+  "entities": {
+    "tournament": {
+      "title": "Tournament",
+      "description": "Esports tournament configuration and schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "slug": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "banner": { "type": "string", "maxLength": 500 },
+        "game": { "type": "string", "enum": ["Free Fire", "Free Fire MAX"] },
+        "mode": { "type": "string", "enum": ["Solo", "Duo", "Squad"] },
+        "map": { "type": "string", "enum": ["Bermuda", "Purgatory", "Kalahari", "Alpine", "NexTerra"] },
+        "perspective": { "type": "string", "enum": ["TPP", "FPP"] },
+        "teamSize": { "type": "number" },
+        "entryFee": { "type": "number" },
+        "prizePool": { "type": "number" },
+        "maxSlots": { "type": "number" },
+        "joinedSlots": { "type": "number" },
+        "status": { "type": "string", "enum": ["DRAFT", "UPCOMING", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "LIVE", "COMPLETED", "CANCELLED"] },
+        "registrationStart": { "type": "string", "maxLength": 64 },
+        "registrationEnd": { "type": "string", "maxLength": 64 },
+        "tournamentStart": { "type": "string", "maxLength": 64 },
+        "matchCount": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "game", "mode", "map", "entryFee", "prizePool", "maxSlots", "joinedSlots", "status"]
+    },
+    "match": {
+      "title": "Match",
+      "description": "Specific battle royale match room within a tournament",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tournamentId": { "type": "string", "maxLength": 128 },
+        "matchNumber": { "type": "number" },
+        "map": { "type": "string", "enum": ["Bermuda", "Purgatory", "Kalahari", "Alpine", "NexTerra"] },
+        "startTime": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["SCHEDULED", "WAITING_ROOM", "LIVE", "RESULTS_SUBMITTED", "COMPLETED"] },
+        "roomId": { "type": "string", "maxLength": 64 },
+        "password": { "type": "string", "maxLength": 64 },
+        "credentialsReleased": { "type": "boolean" },
+        "instructions": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["id", "tournamentId", "matchNumber", "map", "status", "credentialsReleased"]
+    },
+    "registration": {
+      "title": "Registration",
+      "description": "Player or team entry registration into a tournament",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tournamentId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "teamName": { "type": "string", "maxLength": 100 },
+        "ign": { "type": "string", "maxLength": 64 },
+        "playerUid": { "type": "string", "maxLength": 64 },
+        "slotNumber": { "type": "number" },
+        "registeredAt": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["CONFIRMED", "CHECKED_IN", "DISQUALIFIED"] }
+      },
+      "required": ["id", "tournamentId", "userId", "userName", "ign", "playerUid", "slotNumber", "status"]
+    },
+    "matchResult": {
+      "title": "MatchResult",
+      "description": "Player/team result proof and stats submission",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "matchId": { "type": "string", "maxLength": 128 },
+        "tournamentId": { "type": "string", "maxLength": 128 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "teamName": { "type": "string", "maxLength": 100 },
+        "playerUid": { "type": "string", "maxLength": 64 },
+        "placement": { "type": "number" },
+        "kills": { "type": "number" },
+        "placementPoints": { "type": "number" },
+        "killPoints": { "type": "number" },
+        "bonusPoints": { "type": "number" },
+        "penalties": { "type": "number" },
+        "totalScore": { "type": "number" },
+        "evidenceUrl": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "UNDER_REVIEW", "VERIFIED", "REJECTED", "DISPUTED"] },
+        "submittedBy": { "type": "string", "maxLength": 128 },
+        "submittedByName": { "type": "string", "maxLength": 100 },
+        "submittedAt": { "type": "string", "maxLength": 64 },
+        "adminNote": { "type": "string", "maxLength": 500 },
+        "verifiedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "matchId", "tournamentId", "teamName", "playerUid", "placement", "kills", "totalScore", "status", "submittedBy"]
+    },
+    "userProfile": {
+      "title": "UserProfile",
+      "description": "User profile with gaming identity, IGN, and stats",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 120 },
+        "username": { "type": "string", "maxLength": 64 },
+        "email": { "type": "string", "maxLength": 128 },
+        "mobile": { "type": "string", "maxLength": 32 },
+        "role": { "type": "string", "enum": ["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "FINANCE_MANAGER", "SUPPORT_AGENT", "MODERATOR", "USER"] },
+        "playerUid": { "type": "string", "maxLength": 64 },
+        "ign": { "type": "string", "maxLength": 64 },
+        "avatar": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "BANNED"] }
+      },
+      "required": ["id", "username", "email", "role", "playerUid", "ign", "status"]
+    },
+    "userWallet": {
+      "title": "UserWallet",
+      "description": "Balances for tournament participation and prizes",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "availableBalance": { "type": "number" },
+        "pendingBalance": { "type": "number" },
+        "lockedBalance": { "type": "number" },
+        "totalDeposited": { "type": "number" },
+        "totalWithdrawn": { "type": "number" },
+        "totalWinnings": { "type": "number" }
+      },
+      "required": ["userId", "availableBalance", "pendingBalance", "lockedBalance", "totalDeposited", "totalWithdrawn", "totalWinnings"]
+    },
+    "walletLedgerItem": {
+      "title": "WalletLedgerItem",
+      "description": "Double-entry immutable transaction log item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "enum": ["INR", "USD"] },
+        "type": { "type": "string", "enum": ["DEPOSIT", "WITHDRAWAL", "ENTRY_FEE", "PRIZE", "REFUND", "BONUS", "ADJUSTMENT", "REVERSAL"] },
+        "status": { "type": "string", "enum": ["COMPLETED", "PENDING", "FAILED", "REJECTED"] },
+        "reference": { "type": "string", "maxLength": 128 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "balanceBefore": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "idempotencyKey": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "userId", "amount", "currency", "type", "status", "reference", "timestamp", "balanceBefore", "balanceAfter", "idempotencyKey"]
+    },
+    "withdrawalRequest": {
+      "title": "WithdrawalRequest",
+      "description": "Payout request submitted by player",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["UPI", "BANK_TRANSFER", "PAYTM"] },
+        "accountDetails": { "type": "string", "maxLength": 256 },
+        "processingFee": { "type": "number" },
+        "finalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "PROCESSING", "APPROVED", "PAID", "REJECTED", "FAILED", "CANCELLED"] },
+        "requestDate": { "type": "string", "maxLength": 64 },
+        "processingDate": { "type": "string", "maxLength": 64 },
+        "adminNote": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["id", "userId", "userName", "amount", "method", "accountDetails", "status", "requestDate"]
+    },
+    "team": {
+      "title": "Team",
+      "description": "Esports roster / clan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 64 },
+        "tag": { "type": "string", "maxLength": 16 },
+        "logo": { "type": "string", "maxLength": 500 },
+        "captainId": { "type": "string", "maxLength": 128 },
+        "matchesPlayed": { "type": "number" },
+        "wins": { "type": "number" },
+        "totalEarnings": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "tag", "captainId", "matchesPlayed", "wins", "totalEarnings"]
+    },
+    "supportTicket": {
+      "title": "SupportTicket",
+      "description": "Customer inquiry or dispute thread",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "enum": ["PAYMENT", "TOURNAMENT", "RESULT", "ACCOUNT", "TECHNICAL", "OTHER"] },
+        "subject": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["OPEN", "IN_PROGRESS", "WAITING_USER", "RESOLVED", "CLOSED"] },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "userName", "category", "subject", "status", "createdAt", "updatedAt"]
+    },
+    "appNotification": {
+      "title": "AppNotification",
+      "description": "In-app notifications for tournament alerts, payments, and tickets",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 120 },
+        "message": { "type": "string", "maxLength": 500 },
+        "type": { "type": "string", "enum": ["TOURNAMENT", "MATCH", "WALLET", "SUPPORT", "SYSTEM"] },
+        "read": { "type": "boolean" },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "link": { "type": "string", "maxLength": 256 }
+      },
+      "required": ["id", "userId", "title", "message", "type", "read", "timestamp"]
+    },
+    "auditLog": {
+      "title": "AuditLog",
+      "description": "Administrative actions audit log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "actor": { "type": "string", "maxLength": 100 },
+        "actorRole": { "type": "string", "maxLength": 64 },
+        "action": { "type": "string", "maxLength": 100 },
+        "entity": { "type": "string", "maxLength": 64 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "ip": { "type": "string", "maxLength": 64 },
+        "userAgent": { "type": "string", "maxLength": 256 },
+        "timestamp": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "actor", "actorRole", "action", "entity", "entityId", "timestamp"]
+    },
+    "systemSettings": {
+      "title": "SystemSettings",
+      "description": "Platform settings for financial bounds and anti-cheat policies",
+      "type": "object",
+      "properties": {
+        "platformFeePercent": { "type": "number" },
+        "minDeposit": { "type": "number" },
+        "maxDeposit": { "type": "number" },
+        "minWithdrawal": { "type": "number" },
+        "maxWithdrawal": { "type": "number" },
+        "maintenanceMode": { "type": "boolean" },
+        "antiCheatNotice": { "type": "string", "maxLength": 1000 },
+        "roomAutoReleaseMins": { "type": "number" }
+      },
+      "required": ["platformFeePercent", "minDeposit", "maxDeposit", "minWithdrawal", "maxWithdrawal", "maintenanceMode"]
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "Trusted admin UID document",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["SUPER_ADMIN", "ADMIN"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["userId", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/tournaments/{tournamentId}": {
+      "schema": "tournament",
+      "description": "Public tournament entries and status"
+    },
+    "/matches/{matchId}": {
+      "schema": "match",
+      "description": "Match rooms, scheduling, and game credentials"
+    },
+    "/registrations/{registrationId}": {
+      "schema": "registration",
+      "description": "User and team registrations for tournaments"
+    },
+    "/results/{resultId}": {
+      "schema": "matchResult",
+      "description": "Player score and kill submissions with screenshot verification"
+    },
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User profiles and player identities"
+    },
+    "/wallets/{userId}": {
+      "schema": "userWallet",
+      "description": "User balance state"
+    },
+    "/ledger/{ledgerId}": {
+      "schema": "walletLedgerItem",
+      "description": "Immutable ledger transactions"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": "withdrawalRequest",
+      "description": "Withdrawal requests for manual admin review and payout"
+    },
+    "/teams/{teamId}": {
+      "schema": "team",
+      "description": "Esports rosters and squads"
+    },
+    "/tickets/{ticketId}": {
+      "schema": "supportTicket",
+      "description": "Dispute and help tickets"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "appNotification",
+      "description": "Targeted notifications for specific user ID"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "auditLog",
+      "description": "Platform admin audit tracking"
+    },
+    "/settings/{settingsId}": {
+      "schema": "systemSettings",
+      "description": "Platform global parameters"
+    },
+    "/admins/{userId}": {
+      "schema": "admin",
+      "description": "Whitelisted administrator accounts"
+    }
+  }
+}

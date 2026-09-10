@@ -1,0 +1,302 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny catch-all (Pillar 1)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'anonymous');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Role-based admin check with bootstrapped owner email guard
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'mot85886@gmail.com' && request.auth.token.email_verified == true)
+      );
+    }
+
+    // Validation Helpers
+    function isValidTournament(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.game in ['Free Fire', 'Free Fire MAX'] &&
+             data.mode in ['Solo', 'Duo', 'Squad'] &&
+             data.map in ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'NexTerra'] &&
+             data.entryFee is number && data.entryFee >= 0 &&
+             data.prizePool is number && data.prizePool >= 0 &&
+             data.maxSlots is number && data.maxSlots > 0 &&
+             data.joinedSlots is number && data.joinedSlots >= 0 &&
+             data.status in ['DRAFT', 'UPCOMING', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'LIVE', 'COMPLETED', 'CANCELLED'];
+    }
+
+    function isValidMatch(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.tournamentId is string && data.tournamentId.size() <= 128 &&
+             data.matchNumber is number &&
+             data.map in ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'NexTerra'] &&
+             data.status in ['SCHEDULED', 'WAITING_ROOM', 'LIVE', 'RESULTS_SUBMITTED', 'COMPLETED'] &&
+             data.credentialsReleased is bool;
+    }
+
+    function isValidRegistration(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.tournamentId is string && data.tournamentId.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() <= 100 &&
+             data.ign is string && data.ign.size() > 0 && data.ign.size() <= 64 &&
+             data.playerUid is string && data.playerUid.size() > 0 && data.playerUid.size() <= 64 &&
+             data.slotNumber is number && data.slotNumber > 0 &&
+             data.status in ['CONFIRMED', 'CHECKED_IN', 'DISQUALIFIED'];
+    }
+
+    function isValidMatchResult(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.matchId is string && data.matchId.size() <= 128 &&
+             data.tournamentId is string && data.tournamentId.size() <= 128 &&
+             data.teamName is string && data.teamName.size() <= 100 &&
+             data.playerUid is string && data.playerUid.size() <= 64 &&
+             data.placement is number && data.placement >= 1 &&
+             data.kills is number && data.kills >= 0 &&
+             data.totalScore is number &&
+             data.status in ['PENDING', 'UNDER_REVIEW', 'VERIFIED', 'REJECTED', 'DISPUTED'] &&
+             data.submittedBy is string && data.submittedBy.size() <= 128;
+    }
+
+    function isValidUser(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.username is string && data.username.size() > 0 && data.username.size() <= 64 &&
+             data.email is string && data.email.size() <= 128 &&
+             data.role in ['SUPER_ADMIN', 'ADMIN', 'TOURNAMENT_MANAGER', 'FINANCE_MANAGER', 'SUPPORT_AGENT', 'MODERATOR', 'USER'] &&
+             data.playerUid is string && data.playerUid.size() <= 64 &&
+             data.ign is string && data.ign.size() <= 64 &&
+             data.status in ['ACTIVE', 'SUSPENDED', 'BANNED'];
+    }
+
+    function isValidWallet(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.availableBalance is number && data.availableBalance >= 0 &&
+             data.pendingBalance is number && data.pendingBalance >= 0 &&
+             data.lockedBalance is number && data.lockedBalance >= 0;
+    }
+
+    function isValidLedger(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.amount is number && data.amount >= 0 &&
+             data.currency in ['INR', 'USD'] &&
+             data.type in ['DEPOSIT', 'WITHDRAWAL', 'ENTRY_FEE', 'PRIZE', 'REFUND', 'BONUS', 'ADJUSTMENT', 'REVERSAL'] &&
+             data.status in ['COMPLETED', 'PENDING', 'FAILED', 'REJECTED'] &&
+             data.reference is string && data.reference.size() <= 128 &&
+             data.idempotencyKey is string && data.idempotencyKey.size() <= 128;
+    }
+
+    function isValidWithdrawal(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() <= 100 &&
+             data.amount is number && data.amount > 0 &&
+             data.method in ['UPI', 'BANK_TRANSFER', 'PAYTM'] &&
+             data.accountDetails is string && data.accountDetails.size() <= 256 &&
+             data.status in ['PENDING', 'PROCESSING', 'APPROVED', 'PAID', 'REJECTED', 'FAILED', 'CANCELLED'];
+    }
+
+    function isValidTeam(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 64 &&
+             data.tag is string && data.tag.size() > 0 && data.tag.size() <= 16 &&
+             data.captainId is string && data.captainId.size() <= 128;
+    }
+
+    function isValidTicket(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.category in ['PAYMENT', 'TOURNAMENT', 'RESULT', 'ACCOUNT', 'TECHNICAL', 'OTHER'] &&
+             data.subject is string && data.subject.size() > 0 && data.subject.size() <= 200 &&
+             data.status in ['OPEN', 'IN_PROGRESS', 'WAITING_USER', 'RESOLVED', 'CLOSED'];
+    }
+
+    function isValidNotification(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+             data.message is string && data.message.size() <= 500 &&
+             data.type in ['TOURNAMENT', 'MATCH', 'WALLET', 'SUPPORT', 'SYSTEM'] &&
+             data.read is bool;
+    }
+
+    // Collections
+
+    // 1. Tournaments
+    match /tournaments/{tournamentId} {
+      allow get, list: if true;
+      allow create, delete: if isValidId(tournamentId) && isAdmin() && isValidTournament(incoming());
+      allow update: if isValidId(tournamentId) && (
+        isAdmin() ||
+        (isSignedIn() && isValidTournament(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['joinedSlots']))
+      );
+    }
+
+    // 2. Matches
+    match /matches/{matchId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(matchId) && isAdmin() && isValidMatch(incoming());
+    }
+
+    // 3. Registrations
+    match /registrations/{registrationId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(registrationId) &&
+                       isValidRegistration(incoming()) &&
+                       incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(registrationId) &&
+                       isValidRegistration(incoming()) &&
+                       (isAdmin() || (existing().userId == request.auth.uid && incoming().userId == existing().userId));
+      allow delete: if isSignedIn() && isValidId(registrationId) &&
+                       (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    // 4. Match Results
+    match /results/{resultId} {
+      allow get: if isSignedIn() && (existing().submittedBy == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.submittedBy == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(resultId) &&
+                       isValidMatchResult(incoming()) &&
+                       incoming().submittedBy == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(resultId) &&
+                       isValidMatchResult(incoming()) &&
+                       (isAdmin() || (existing().submittedBy == request.auth.uid && existing().status == 'PENDING'));
+      allow delete: if isValidId(resultId) && isAdmin();
+    }
+
+    // 5. Users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(userId) && userId == request.auth.uid &&
+                       isValidUser(incoming()) &&
+                       (incoming().role == 'USER' || isAdmin());
+      allow update: if isSignedIn() && isValidId(userId) && userId == request.auth.uid &&
+                       isValidUser(incoming()) &&
+                       (incoming().role == existing().role || isAdmin());
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 6. Wallets
+    match /wallets/{userId} {
+      allow get: if isSignedIn() && (userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(userId) && userId == request.auth.uid && isValidWallet(incoming());
+      allow update: if isSignedIn() && isValidId(userId) &&
+                       isValidWallet(incoming()) &&
+                       (userId == request.auth.uid || isAdmin());
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 7. Wallet Ledger
+    match /ledger/{ledgerId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(ledgerId) &&
+                       isValidLedger(incoming()) &&
+                       (incoming().userId == request.auth.uid || isAdmin());
+      allow update, delete: if false; // Immutable ledger
+    }
+
+    // 8. Withdrawals
+    match /withdrawals/{withdrawalId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(withdrawalId) &&
+                       isValidWithdrawal(incoming()) &&
+                       incoming().userId == request.auth.uid;
+      allow update: if isValidId(withdrawalId) && isAdmin() && isValidWithdrawal(incoming());
+      allow delete: if isValidId(withdrawalId) && isAdmin();
+    }
+
+    // 9. Teams
+    match /teams/{teamId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && isValidId(teamId) &&
+                       isValidTeam(incoming()) &&
+                       incoming().captainId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(teamId) &&
+                       isValidTeam(incoming()) &&
+                       (existing().captainId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && isValidId(teamId) &&
+                       (existing().captainId == request.auth.uid || isAdmin());
+    }
+
+    // 10. Support Tickets
+    match /tickets/{ticketId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(ticketId) &&
+                       isValidTicket(incoming()) &&
+                       incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(ticketId) &&
+                       isValidTicket(incoming()) &&
+                       (existing().userId == request.auth.uid || isAdmin());
+      allow delete: if isValidId(ticketId) && isAdmin();
+    }
+
+    // 11. Notifications
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(notificationId) &&
+                       isValidNotification(incoming()) &&
+                       (incoming().userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && isValidId(notificationId) &&
+                       isValidNotification(incoming()) &&
+                       (existing().userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && isValidId(notificationId) &&
+                       (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    // 12. Audit Logs
+    match /auditLogs/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(logId);
+      allow update, delete: if false; // Immutable audit log
+    }
+
+    // 13. System Settings
+    match /settings/{settingsId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // 14. Admins
+    match /admins/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

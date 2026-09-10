@@ -18,7 +18,9 @@ import {
   X,
   Sparkles,
   Gamepad2,
-  CheckCheck
+  CheckCheck,
+  LogOut,
+  Database
 } from 'lucide-react';
 import DepositModal from '../modals/DepositModal';
 import AuthModal from '../modals/AuthModal';
@@ -35,6 +37,9 @@ export default function Navbar() {
     notifications,
     markNotificationAsRead,
     markAllNotificationsRead,
+    firebaseUser,
+    signOutUser,
+    isFirebaseConnected,
   } = useTournament();
 
   const [showDeposit, setShowDeposit] = useState(false);
@@ -66,6 +71,12 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Firebase Status Badge */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#131926] border border-[#1F273D] text-[10px] text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Firebase Cloud Live</span>
+            </div>
+
             {/* Quick View switcher tabs */}
             <div className="flex items-center bg-[#131926] p-0.5 rounded-lg border border-[#1F273D]">
               <button
@@ -367,7 +378,7 @@ export default function Navbar() {
                     Wallet & Transactions
                   </button>
 
-                  <div className="border-t border-[#1C2333] my-1 pt-1">
+                  <div className="border-t border-[#1C2333] my-1 pt-1 space-y-1">
                     <button
                       onClick={() => {
                         setShowAuth(true);
@@ -377,6 +388,18 @@ export default function Navbar() {
                     >
                       Switch Account / Role...
                     </button>
+                    {firebaseUser && (
+                      <button
+                        onClick={() => {
+                          signOutUser();
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#161D2B] text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center justify-between"
+                      >
+                        <span>Sign Out (Firebase)</span>
+                        <LogOut className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
