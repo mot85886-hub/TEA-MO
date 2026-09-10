@@ -1,0 +1,6 @@
+{
+  "name": "Free Fire Tournament Platform",
+  "description": "Premium esports tournament platform for Free Fire featuring live brackets, match rooms, atomic wallet ledger, automated scoring engine, team management, and dedicated admin controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

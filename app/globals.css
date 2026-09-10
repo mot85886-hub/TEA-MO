@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-chakra: 'Chakra Petch', sans-serif;
+    --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+.font-gaming {
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.font-body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Custom scrollbar for esports dark aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080A0F;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2637;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF2A4D;
+}
+
+/* Subtle glow utilities */
+.glow-red {
+  box-shadow: 0 0 24px -4px rgba(255, 42, 77, 0.35);
+}
+
+.glow-orange {
+  box-shadow: 0 0 24px -4px rgba(255, 107, 0, 0.3);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px -4px rgba(0, 245, 155, 0.35);
+}
+
+.clip-corner-sm {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.clip-corner-tag {
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 0% 100%);
+}
+
